@@ -6,18 +6,18 @@ import (
 
 	"github.com/Julio-Cesar07/gobid/internal/api/dtos"
 	"github.com/Julio-Cesar07/gobid/internal/api/utils"
-	user_services "github.com/Julio-Cesar07/gobid/internal/services/users"
+	"github.com/Julio-Cesar07/gobid/internal/services/users"
 )
 
-func (u *UserHandler) handleSignupUser(w http.ResponseWriter, r *http.Request) {
-	data, problems, err := utils.DecodeValidJson[dtos.CreateUserReq](r)
+func (uh *UserHandler) handleSignupUser(w http.ResponseWriter, r *http.Request) {
+	data, problems, err := utils.DecodeValidJson[dtos.CreateUserDto](r)
 
 	if err != nil {
 		utils.EncodeJson(w, utils.Response{Error: problems}, http.StatusUnprocessableEntity)
 		return
 	}
 
-	id, err := u.Service.CreateUser(r.Context(), user_services.CreateUserReq{
+	id, err := uh.Service.CreateUser(r.Context(), users.CreateUserReq{
 		Username: data.Username,
 		Email:    data.Email,
 		Password: data.Password,
@@ -25,11 +25,11 @@ func (u *UserHandler) handleSignupUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		if errors.Is(err, user_services.ErrDuplicatedEmailOrUsername) {
-			utils.EncodeJson(w, utils.Response{Error: "email or username already exists"}, http.StatusUnprocessableEntity)
+		if errors.Is(err, users.ErrDuplicatedEmailOrUsername) {
+			utils.EncodeJson(w, utils.Response{Error: users.ErrDuplicatedEmailOrUsername.Error()}, http.StatusUnprocessableEntity)
 			return
 		}
-		utils.EncodeJson(w, utils.Response{Error: "something went wrong"}, http.StatusInternalServerError)
+		utils.EncodeJson(w, utils.Response{Error: "something went wrong"}, http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -37,11 +37,9 @@ func (u *UserHandler) handleSignupUser(w http.ResponseWriter, r *http.Request) {
 		UserId string `json:"user_id"`
 	}
 
-	utils.EncodeJson(w, utils.Response{Data: response{
-		UserId: id.String(),
-	}}, http.StatusInternalServerError)
+	utils.EncodeJson(w, utils.Response{Data: response{UserId: id.String()}}, http.StatusCreated)
 }
 
-func (u *UserHandler) handleLoginUser(w http.ResponseWriter, r *http.Request) {}
+func (uh *UserHandler) handleLogoutUser(w http.ResponseWriter, r *http.Request) {
 
-func (u *UserHandler) handleLogoutUser(w http.ResponseWriter, r *http.Request) {}
+}

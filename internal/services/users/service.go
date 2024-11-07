@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var ErrDuplicatedEmailOrUsername = errors.New("username or email already exists")
+var ErrDuplicatedEmailOrUsername = errors.New("email or username already exists")
 
 type UserService struct {
 	pool    *pgxpool.Pool

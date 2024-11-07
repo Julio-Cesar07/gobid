@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/Julio-Cesar07/gobid/internal/store/pgstore"
 	"github.com/google/uuid"
@@ -18,20 +19,21 @@ type CreateUserReq struct {
 	Bio      string
 }
 
-func (us *UserService) CreateUser(ctx context.Context, user CreateUserReq) (uuid.UUID, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+func (us *UserService) CreateUser(ctx context.Context, data CreateUserReq) (uuid.UUID, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), 12)
 
 	if err != nil {
+		slog.Error("failed to generate uuid", "error", err)
 		return uuid.UUID{}, err
 	}
 
 	args := pgstore.CreateUserParams{
-		Username:     user.Username,
-		Email:        user.Email,
+		Username:     data.Username,
+		Email:        data.Email,
 		PasswordHash: hash,
 		Bio: pgtype.Text{
-			String: user.Bio,
-			Valid:  user.Bio != "",
+			String: data.Bio,
+			Valid:  data.Bio != "",
 		},
 	}
 
@@ -42,6 +44,7 @@ func (us *UserService) CreateUser(ctx context.Context, user CreateUserReq) (uuid
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return uuid.UUID{}, ErrDuplicatedEmailOrUsername
 		}
+		slog.Error("failed to create user in database")
 		return uuid.UUID{}, err
 	}
 

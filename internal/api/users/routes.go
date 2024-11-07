@@ -9,10 +9,10 @@ type UserHandler struct {
 	Service user_services.UserService
 }
 
-func (u *UserHandler) BindUserRoutes(r chi.Router) {
+func (uh *UserHandler) BindUserRoutes(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
-		r.Post("/signup", u.handleSignupUser)
-		r.Post("/login", u.handleLoginUser)
-		r.Post("/logout", u.handleLogoutUser)
+		r.Post("/signup", uh.handleSignupUser)
+		r.Post("/login", uh.handleLoginUser)
+		r.Post("/logout", uh.handleLogoutUser)
 	})
 }
