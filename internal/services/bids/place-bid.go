@@ -50,17 +50,17 @@ func (bs *BidsService) PlaceBid(ctx context.Context, params PlaceBidReq) (uuid.U
 			slog.Error("failed to get highest bid by product id", "error", err)
 			return uuid.UUID{}, err
 		}
-	}
+	} else {
+		lastBidAmountFloat, err := highestBid.BidAmount.Float64Value()
 
-	lastBidAmountFloat, err := highestBid.BidAmount.Float64Value()
+		if err != nil {
+			slog.Error("failed to convert bid amount to float 64", "error", err)
+			return uuid.UUID{}, err
+		}
 
-	if err != nil {
-		slog.Error("failed to convert bid amount to float 64", "error", err)
-		return uuid.UUID{}, err
-	}
-
-	if lastBidAmountFloat.Float64 >= params.BidAmount {
-		return uuid.UUID{}, errorsapi.ErrBidLowerThanTheLast
+		if lastBidAmountFloat.Float64 >= params.BidAmount {
+			return uuid.UUID{}, errorsapi.ErrBidLowerThanTheLast
+		}
 	}
 
 	var bidAmountPgType pgtype.Numeric
