@@ -3,9 +3,12 @@ package users
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log/slog"
 
+	errorsapi "github.com/Julio-Cesar07/gobid/internal/services/errors"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthenticateReq struct {
@@ -14,18 +17,27 @@ type AuthenticateReq struct {
 }
 
 type AuthenticateRes struct {
-	Token string
+	Id uuid.UUID
 }
 
 func (us *UserService) Authenticate(ctx context.Context, data AuthenticateReq) (AuthenticateRes, error) {
-	_, err := us.queries.GetUserByEmail(ctx, data.Email)
+	user, err := us.queries.GetUserByEmail(ctx, data.Email)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return AuthenticateRes{}, fmt.Errorf("not found")
+			return AuthenticateRes{}, errorsapi.ErrInvalidCredentials
 		}
-		return AuthenticateRes{}, fmt.Errorf("not found")
+		slog.Error("failed to get user by email", "error", err)
+		return AuthenticateRes{Id: uuid.UUID{}}, err
 	}
 
-	return AuthenticateRes{Token: "oi"}, nil
+	if err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(data.Password)); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return AuthenticateRes{Id: uuid.UUID{}}, errorsapi.ErrInvalidCredentials
+		}
+		slog.Error("failed to compare hash and password", "error", err)
+		return AuthenticateRes{Id: uuid.UUID{}}, err
+	}
+
+	return AuthenticateRes{user.ID}, nil
 }

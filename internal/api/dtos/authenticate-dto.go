@@ -2,12 +2,12 @@ package dtos
 
 import "context"
 
-type LoginDto struct {
+type AuthenticateDto struct {
 	Email    string
 	Password string
 }
 
-func (dto LoginDto) Valid(ctx context.Context) Evaluator {
+func (dto AuthenticateDto) Valid(ctx context.Context) Evaluator {
 	var eval Evaluator
 
 	eval.CheckField(NotBlank(dto.Email), "email", "this field cannot be empty")

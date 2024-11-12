@@ -2,8 +2,10 @@ package dtos
 
 import (
 	"context"
+	"math"
 	"regexp"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -31,6 +33,8 @@ func (e *Evaluator) CheckField(ok bool, key, message string) {
 	}
 }
 
+const minAuctionDuration = 2 * time.Hour
+
 func NotBlank(value string) bool {
 	return strings.TrimSpace(value) != ""
 }
@@ -45,4 +49,11 @@ func MinChars(s string, n int) bool {
 
 func Matches(s string, rx *regexp.Regexp) bool {
 	return rx.MatchString(s)
+}
+
+func Float2Decimals(f float64) bool {
+	multiplied := f * 100
+	rounded := math.Round(multiplied)
+	diff := math.Abs(multiplied - rounded)
+	return diff < 1e-9
 }

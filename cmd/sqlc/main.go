@@ -1,4 +1,4 @@
-package terndotenv
+package sqlc
 
 import (
 	"fmt"
@@ -13,12 +13,10 @@ func Main() {
 	}
 
 	cmd := exec.Command(
-		"tern",
-		"migrate",
-		"--migrations",
-		"./internal/store/pgstore/migrations",
-		"--config",
-		"./internal/store/pgstore/migrations/tern.conf",
+		"sqlc",
+		"generate",
+		"-f",
+		"./internal/store/pgstore/sqlc.yaml",
 	)
 
 	output, err := cmd.CombinedOutput()

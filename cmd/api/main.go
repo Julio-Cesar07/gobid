@@ -1,17 +1,23 @@
-package main
+package api
 
 import (
 	"context"
+	"encoding/gob"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/Julio-Cesar07/gobid/internal/api"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func init() {
+	gob.Register(uuid.UUID{})
+}
+
+func Main() {
 	if err := godotenv.Load(); err != nil {
 		panic(err)
 	}

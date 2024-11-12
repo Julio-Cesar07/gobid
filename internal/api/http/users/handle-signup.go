@@ -6,13 +6,18 @@ import (
 
 	"github.com/Julio-Cesar07/gobid/internal/api/dtos"
 	"github.com/Julio-Cesar07/gobid/internal/api/utils"
+	errorsapi "github.com/Julio-Cesar07/gobid/internal/services/errors"
 	"github.com/Julio-Cesar07/gobid/internal/services/users"
 )
 
 func (uh *UserHandler) handleSignupUser(w http.ResponseWriter, r *http.Request) {
-	data, problems, err := utils.DecodeValidJson[dtos.CreateUserDto](r)
+	data, problems, err := utils.DecodeValidJson[dtos.CreateUserDto](r, dtos.CreateUserDto{})
 
 	if err != nil {
+		if problems == nil {
+			utils.EncodeJson(w, utils.Response{Error: err.Error()}, http.StatusBadRequest)
+			return
+		}
 		utils.EncodeJson(w, utils.Response{Error: problems}, http.StatusUnprocessableEntity)
 		return
 	}
@@ -25,11 +30,11 @@ func (uh *UserHandler) handleSignupUser(w http.ResponseWriter, r *http.Request) 
 	})
 
 	if err != nil {
-		if errors.Is(err, users.ErrDuplicatedEmailOrUsername) {
-			utils.EncodeJson(w, utils.Response{Error: users.ErrDuplicatedEmailOrUsername.Error()}, http.StatusUnprocessableEntity)
+		if errors.Is(err, errorsapi.ErrDuplicatedEmailOrUsername) {
+			utils.EncodeJson(w, utils.Response{Error: errorsapi.ErrDuplicatedEmailOrUsername.Error()}, http.StatusUnprocessableEntity)
 			return
 		}
-		utils.EncodeJson(w, utils.Response{Error: "something went wrong"}, http.StatusUnprocessableEntity)
+		utils.EncodeJson(w, utils.Response{Error: errorsapi.ErrSomethingWentWrong.Error()}, http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -38,8 +43,4 @@ func (uh *UserHandler) handleSignupUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	utils.EncodeJson(w, utils.Response{Data: response{UserId: id.String()}}, http.StatusCreated)
-}
-
-func (uh *UserHandler) handleLogoutUser(w http.ResponseWriter, r *http.Request) {
-
 }

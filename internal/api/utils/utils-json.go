@@ -24,9 +24,7 @@ func EncodeJson(w http.ResponseWriter, resp Response, status int) error {
 	return nil
 }
 
-func DecodeValidJson[T dtos.Validator](r *http.Request) (T, dtos.Evaluator, error) {
-	var data T
-
+func DecodeValidJson[T dtos.Validator](r *http.Request, data T) (T, dtos.Evaluator, error) {
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		return data, nil, fmt.Errorf("decode json %w", err)
 	}

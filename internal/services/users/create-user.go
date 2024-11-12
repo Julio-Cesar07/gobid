@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
+	errorsapi "github.com/Julio-Cesar07/gobid/internal/services/errors"
 	"github.com/Julio-Cesar07/gobid/internal/store/pgstore"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -42,7 +43,7 @@ func (us *UserService) CreateUser(ctx context.Context, data CreateUserReq) (uuid
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return uuid.UUID{}, ErrDuplicatedEmailOrUsername
+			return uuid.UUID{}, errorsapi.ErrDuplicatedEmailOrUsername
 		}
 		slog.Error("failed to create user in database")
 		return uuid.UUID{}, err
