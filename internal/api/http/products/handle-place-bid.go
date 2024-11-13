@@ -1,4 +1,4 @@
-package bids
+package products
 
 import (
 	"errors"
@@ -13,18 +13,18 @@ import (
 	"github.com/google/uuid"
 )
 
-func (bh *BidsHandler) handlePlaceBid(w http.ResponseWriter, r *http.Request) {
-	bidderUUID, ok := bh.Sessions.Get(r.Context(), "AuthenticatedUserId").(uuid.UUID)
+func (ph *ProductHandler) handlePlaceBid(w http.ResponseWriter, r *http.Request) {
+	bidderUUID, ok := ph.Sessions.Get(r.Context(), "AuthenticatedUserId").(uuid.UUID)
 
 	if !ok {
 		utils.EncodeJson(w, utils.Response{Error: errorsapi.ErrInvalidCredentials.Error()}, http.StatusUnauthorized)
 		return
 	}
 
-	product_id := chi.URLParam(r, "product_id")
+	rawProductId := chi.URLParam(r, "product_id")
 
 	data, problems, err := utils.DecodeValidJson[dtos.PlaceBidDto](r, dtos.PlaceBidDto{
-		ProductID: product_id,
+		ProductID: rawProductId,
 		BidderID:  bidderUUID.String(),
 	})
 
@@ -40,12 +40,11 @@ func (bh *BidsHandler) handlePlaceBid(w http.ResponseWriter, r *http.Request) {
 	productUUID, err := uuid.Parse(data.ProductID)
 
 	if err != nil {
-		slog.Error("failed to convert product id strint to google uuid", "error", err)
-		utils.EncodeJson(w, utils.Response{Error: errorsapi.ErrSomethingWentWrong.Error()}, http.StatusInternalServerError)
+		utils.EncodeJson(w, utils.Response{Error: "invalid product id - must be a valid uuid"}, http.StatusBadRequest)
 		return
 	}
 
-	id, err := bh.Service.PlaceBid(r.Context(), bids.PlaceBidReq{
+	bid, err := ph.BidsService.PlaceBid(r.Context(), bids.PlaceBidReq{
 		ProductID: productUUID,
 		BidderID:  bidderUUID,
 		BidAmount: data.BidAmount,
@@ -68,5 +67,5 @@ func (bh *BidsHandler) handlePlaceBid(w http.ResponseWriter, r *http.Request) {
 		BidId string `json:"bid_id"`
 	}
 
-	utils.EncodeJson(w, utils.Response{Data: response{BidId: id.String()}}, http.StatusCreated)
+	utils.EncodeJson(w, utils.Response{Data: response{BidId: bid.ID.String()}}, http.StatusCreated)
 }

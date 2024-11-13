@@ -15,7 +15,7 @@ import (
 const createBids = `-- name: CreateBids :one
 INSERT INTO bids ("product_id", "bidder_id", "bid_amount")
 VALUES ($1, $2, $3)
-RETURNING id
+RETURNING id, product_id, bidder_id, bid_amount, created_at
 `
 
 type CreateBidsParams struct {
@@ -24,11 +24,17 @@ type CreateBidsParams struct {
 	BidAmount pgtype.Numeric `json:"bid_amount"`
 }
 
-func (q *Queries) CreateBids(ctx context.Context, arg CreateBidsParams) (uuid.UUID, error) {
+func (q *Queries) CreateBids(ctx context.Context, arg CreateBidsParams) (Bid, error) {
 	row := q.db.QueryRow(ctx, createBids, arg.ProductID, arg.BidderID, arg.BidAmount)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i Bid
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.BidderID,
+		&i.BidAmount,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getBidsByProductId = `-- name: GetBidsByProductId :many

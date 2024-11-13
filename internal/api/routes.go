@@ -32,7 +32,6 @@ func (api *Api) BindRoutes() {
 
 			api.UserHandler.BindUserRoutes(r)
 			api.ProductHandler.BindProductsRoutes(r)
-			api.BidsHandler.BindBidsRoutes(r)
 		})
 	})
 }

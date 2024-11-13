@@ -1,11 +1,13 @@
 package products
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/Julio-Cesar07/gobid/internal/api/dtos"
 	"github.com/Julio-Cesar07/gobid/internal/api/utils"
+	auctions_service "github.com/Julio-Cesar07/gobid/internal/services/auctions"
 	errorsapi "github.com/Julio-Cesar07/gobid/internal/services/errors"
 	"github.com/Julio-Cesar07/gobid/internal/services/products"
 	"github.com/google/uuid"
@@ -32,7 +34,7 @@ func (ph *ProductHandler) handleCreateProduct(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	id, err := ph.Service.CreateProduct(r.Context(), products.CreateProductReq{
+	productId, err := ph.ProductsService.CreateProduct(r.Context(), products.CreateProductReq{
 		Selled_id:    userId,
 		Product_name: data.ProductName,
 		Description:  data.Description,
@@ -49,9 +51,22 @@ func (ph *ProductHandler) handleCreateProduct(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	ctx, _ := context.WithDeadline(context.Background(), data.AuctionEnd)
+	auctionRoom := auctions_service.NewAuctionRoom(ctx, ph.BidsService, productId)
+
+	go auctionRoom.Run()
+
+	ph.AuctionLobby.Lock()
+	ph.AuctionLobby.Rooms[productId] = auctionRoom
+	ph.AuctionLobby.Unlock()
+
 	type response struct {
 		ProductId string `json:"product_id"`
+		Message   string `json:"message"`
 	}
 
-	utils.EncodeJson(w, utils.Response{Data: response{ProductId: id.String()}}, http.StatusCreated)
+	utils.EncodeJson(w, utils.Response{Data: response{
+		ProductId: productId.String(),
+		Message:   "Auction has started with success",
+	}}, http.StatusCreated)
 }
